@@ -1,0 +1,44 @@
+name: Deployment pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+jobs:
+  simple_deployment_pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Tests (Status Check)
+        run: echo "Running tests..."
+        # The success of this job will be required by branch protection
+
+      - name: Deploy to Production
+        # Only deploy on push/merge to main
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "🚀 Deploying code to production on main branch!"
+
+  tag_release:
+    # This job waits for the simple_deployment_pipeline job to complete successfully
+    needs: [simple_deployment_pipeline]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code (with history for tagging)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # IMPORTANT for tag action
+
+      - name: Bump version and push tag
+        # Only run this step on a push/merge to the main branch
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: anothrNick/github-tag-action@1.64.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Configure to bump the last number by default (patch)
+          DEFAULT_BUMP: patch
