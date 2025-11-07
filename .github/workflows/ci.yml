@@ -25,9 +25,11 @@ jobs:
         run: echo "🚀 Deploying code to production on main branch!"
 
   tag_release:
-    # This job waits for the simple_deployment_pipeline job to complete successfully
     needs: [simple_deployment_pipeline]
     runs-on: ubuntu-latest
+    # Add permissions here ⬇️
+    permissions:
+      contents: write
     steps:
       - name: Checkout code (with history for tagging)
         uses: actions/checkout@v4
